@@ -260,6 +260,29 @@ function shareConcept(c) {
 function reloadPage() { window.location.reload() }
 function labelFor(id) { return byId.value.get(id)?.label || localId(id) }
 function typeLabel(c) { return c.procedure ? 'Procedure' : 'Soil concept' }
+function safeHref(value) {
+  const text = valueText(value).trim()
+  return /^https?:\/\//i.test(text) ? text : ''
+}
+function sourceReferences(c) {
+  const rows = asArray(c?.raw?.definitions).map((definition) => {
+    const source = definition?.source ?? definition?.['dct:source'] ?? definition?.['prov:wasDerivedFrom']
+    const href = safeHref(source)
+    return href ? { href, label: valueText(source) } : null
+  }).filter(Boolean)
+  return [...new Map(rows.map(row => [row.href, row])).values()]
+}
+function matchEntries(c, kind) {
+  const keys = kind === 'exact'
+    ? ['exactMatch', 'skos:exactMatch', 'http://www.w3.org/2004/02/skos/core#exactMatch']
+    : ['closeMatch', 'skos:closeMatch', 'http://www.w3.org/2004/02/skos/core#closeMatch']
+  const entries = asArray(first(c?.raw, keys)).map((entry) => {
+    const href = safeHref(entry?.uri ?? entry?.['@id'] ?? entry?.url ?? entry)
+    if (!href) return null
+    return { href, label: valueText(entry?.label) || href }
+  }).filter(Boolean)
+  return [...new Map(entries.map(entry => [entry.href, entry])).values()]
+}
 
 onMounted(async () => {
   window.addEventListener('popstate', onPopState)
@@ -359,6 +382,18 @@ onBeforeUnmount(() => {
               <div v-else class="muted-empty">No description is available for this concept.</div>
               <div v-if="selected.raw.example || selected.raw['skos:example']" class="extra-field"><span class="field-label">EXAMPLE</span><p>{{ values(selected.raw.example || selected.raw['skos:example']).join(' · ') }}</p></div>
               <div v-if="selected.raw.note || selected.raw['skos:note'] || selected.raw.scopeNote || selected.raw['skos:scopeNote']" class="extra-field"><span class="field-label">NOTE</span><p>{{ values(selected.raw.note || selected.raw['skos:note'] || selected.raw.scopeNote || selected.raw['skos:scopeNote']).join(' · ') }}</p></div>
+              <div v-if="sourceReferences(selected).length" class="extra-field reference-field">
+                <span class="field-label">SOURCE REFERENCES</span>
+                <a v-for="source in sourceReferences(selected)" :key="source.href" class="external-reference" :href="source.href" target="_blank" rel="noopener noreferrer">{{ source.label }} <span>↗</span></a>
+              </div>
+              <div v-if="matchEntries(selected, 'exact').length" class="extra-field reference-field">
+                <span class="field-label">EXACT MATCH</span>
+                <a v-for="match in matchEntries(selected, 'exact')" :key="match.href" class="external-reference" :href="match.href" target="_blank" rel="noopener noreferrer">{{ match.label }} <span>↗</span></a>
+              </div>
+              <div v-if="matchEntries(selected, 'close').length" class="extra-field reference-field">
+                <span class="field-label">CLOSE MATCH</span>
+                <a v-for="match in matchEntries(selected, 'close')" :key="match.href" class="external-reference" :href="match.href" target="_blank" rel="noopener noreferrer">{{ match.label }} <span>↗</span></a>
+              </div>
             </section>
             <section class="detail-card relations-card">
               <div class="section-heading"><span class="section-icon">⌘</span><div><h2>Concept relations</h2><p>Navigate the vocabulary network</p></div></div>

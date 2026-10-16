@@ -10,3 +10,6 @@
 .relation-procedure .relation-symbol{color:#b87536}
 .relation-name{flex:1;min-width:0;overflow-wrap:anywhere}
 .relation-type{flex:0 0 auto;font-size:9px;font-weight:700;letter-spacing:.1px;color:#a46b31;background:#fbf1e5;border:1px solid #efd9bc;border-radius:4px;padding:3px 5px}
+
+/* External source and SKOS match links on the concept detail page. */
+.reference-field{display:flex;flex-direction:column;align-items:flex-start;gap:7px}.external-reference{display:inline-flex;align-items:flex-start;gap:6px;max-width:100%;font-size:11px;line-height:1.6;color:#477452;text-decoration:none;overflow-wrap:anywhere}.external-reference:hover{text-decoration:underline;color:#244d3b}.external-reference span{flex:0 0 auto;color:#94a197}
